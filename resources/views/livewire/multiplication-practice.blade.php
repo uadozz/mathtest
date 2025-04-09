@@ -8,23 +8,23 @@
         .container {
             padding: 20px;
             max-width: 800px;
-            margin: 0 auto;
+            margin: 30px auto;
         }
         h1, h2 {
             text-align: center;
         }
         /* Responsive font sizes */
         .problem, .feedback, .score {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
         }
         @media (min-width: 768px) {
             .problem, .feedback, .score {
-                font-size: 2.3rem;
+                font-size: 2rem;
             }
         }
         @media (min-width: 1024px) {
             .problem, .feedback, .score {
-                font-size: 2.8rem;
+                font-size: 2.5rem;
             }
         }
         .correct {
@@ -59,25 +59,41 @@
             font-size: inherit;
             padding: 5px 10px;
         }
+        .actions {
+            text-align: center;
+            margin: 20px 0;
+        }
     </style>
-
+B
     @if(!$hasStarted)
         <div class="container">
-            <h1>Вибери варіанти для перевірки</h1>
+            <h1>Вибери операції та варіанти для перевірки</h1>
+
+            <!-- Operation selection -->
+            <div style="margin-bottom: 15px;">
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" wire:model="selectedOperations" value="multiplication">
+                    Множення
+                </label>
+                <label style="margin-right: 10px;">
+                    <input type="checkbox" wire:model="selectedOperations" value="division">
+                    Ділення
+                </label>
+            </div>
+
+            <!-- Bases selection -->
+            <div style="margin-bottom: 15px;">
+                @foreach(range($minMultiplier, 9) as $base)
+                    <label style="margin-right: 10px;">
+                        <input type="checkbox" wire:model="selectedBases" value="{{ $base }}">
+                        {{ $base }}
+                    </label>
+                @endforeach
+            </div>
+            <button type="submit" wire:click.prevent="startPractice">Почати перевірку</button>
             @if(session()->has('error'))
                 <div style="color: red;">{{ session('error') }}</div>
             @endif
-            <form wire:submit.prevent="startPractice">
-                <div style="margin-bottom: 15px;">
-                    @foreach(range($minMultiplier, 9) as $base)
-                        <label style="margin-right: 10px;">
-                            <input type="checkbox" wire:model="selectedBases" value="{{ $base }}">
-                            {{ $base }}
-                        </label>
-                    @endforeach
-                </div>
-                <button type="submit">Почати перевірку</button>
-            </form>
         </div>
     @else
         <!-- Fixed Score Display -->
@@ -86,25 +102,34 @@
         </div>
 
         <div class="container">
-            <h2>Приклади</h2>
+            @if(!$practiceComplete)
+                <div class="actions">
+                    <button wire:click="finishPractice">Закінчити</button>
+                </div>
+            @endif
 
             @if($practiceComplete)
                 <div class="feedback" style="text-align: center; color: blue;">
                     Ти завершив розвʼязаня усіх прикладів! Молодець!
                 </div>
+                <div class="actions">
+                    <button wire:click="resetPractice">Почати знову</button>
+                </div>
             @endif
+
+            <h2>Приклади</h2>
 
             <ul class="problem-list" style="list-style: none; padding: 0;">
                 @foreach($problems as $index => $problem)
                     <li class="problem">
-                        @if($loop->last && $problem['userAnswer'] === null && !$practiceComplete)
+                        @if($loop->last && is_null($problem['userAnswer']) && !$practiceComplete)
                             <!-- Current unsolved problem -->
                             <span class="question">
-                                {{ $problem['base'] }} x {{ $problem['multiplier'] }} = 
+                                {{ $problem['question'] }} =
                             </span>
                             <form wire:submit.prevent="submitAnswer" style="display: inline;">
-                                <span x-data x-init="$nextTick(() => { $refs.answer.focus() })" style="display:inline-block;">
-                                    <input type="number" wire:model.defer="currentAnswer" x-ref="answer" autofocus>
+                                <span x-data x-init="$nextTick(() => { $refs.answer.focus() })" style="display: inline-block;">
+                                    <input type="number" wire:model.defer="currentAnswer" x-ref="answer">
                                 </span>
                                 <button type="submit">ОК</button>
                             </form>
@@ -112,12 +137,11 @@
                             <!-- Solved problem -->
                             @if($problem['result'] === 'correct')
                                 <span class="correct">
-                                    {{ $problem['base'] }} x {{ $problem['multiplier'] }} = {{ $problem['correctAnswer'] }}
+                                    {{ $problem['question'] }} = {{ $problem['correctAnswer'] }}
                                 </span>
                             @else
                                 <span class="incorrect">
-                                    {{ $problem['base'] }} x {{ $problem['multiplier'] }} = 
-                                    <del>{{ $problem['userAnswer'] }}</del> {{ $problem['correctAnswer'] }}
+                                    {{ $problem['question'] }} = <del>{{ $problem['userAnswer'] }}</del> {{ $problem['correctAnswer'] }}
                                 </span>
                             @endif
                         @endif
@@ -127,4 +151,3 @@
         </div>
     @endif
 </div>
-
