@@ -64,7 +64,7 @@
             margin: 20px 0;
         }
     </style>
-B
+
     @if(!$hasStarted)
         <div class="container">
             <h1>Вибери операції та варіанти для перевірки</h1>
